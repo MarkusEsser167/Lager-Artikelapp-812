@@ -12,14 +12,11 @@ für Standort **812** – gleicher Code, eigene Lagerplatz-/Mitarbeiterliste und
 - **Verschrottung melden** – Artikelnummer, Menge, Grund, bis zu 4 Fotos, Bemerkung. Wird beim Absenden
   sofort als PDF (mit allen Fotos eingebettet) an `David.Hellwig@wego-vti.de` und
   `anthony.maier@wego-vti.de` gemailt.
-- **Massen-Lagerplatzkorrektur** – zur Inventurvorbereitung: Artikel scannen und Lagerplatz erfassen.
-  Mehrere Korrekturen werden auf der Seite gesammelt und gemeinsam als eine Excel-Datei an
-  `frankfurt@wego-vti.de` gesendet – im festen SAP-Massenupload-Format `MATNR` (Artikelnummer),
-  `WERKS`/`LGORT` (fest „812“), `LGPBE` (neuer Lagerplatz), ohne weitere Spalten. **Hinweis:** Anders als
-  bei Standort 106 gibt es hier (noch) keine `data/artikel-lagerplatz.xlsx`-Referenzliste, die den
-  aktuellen Lagerplatz laut System anzeigt – die App zeigt dafür einen Hinweis „nicht gefunden“ und
-  erfasst trotzdem normal weiter. Bei Bedarf eine Datei im gleichen Format wie bei Standort 106
-  nachreichen.
+- **Massen-Lagerplatzkorrektur** – zur Inventurvorbereitung: Artikel scannen, aktuellen Lagerplatz laut
+  System (`data/artikel-lagerplatz.xlsx`) prüfen und ggf. korrigieren. Mehrere Korrekturen werden auf der
+  Seite gesammelt und gemeinsam als eine Excel-Datei an `frankfurt@wego-vti.de` gesendet – im festen
+  SAP-Massenupload-Format `MATNR` (Artikelnummer), `WERKS`/`LGORT` (fest „812“), `LGPBE` (neuer
+  Lagerplatz), ohne weitere Spalten.
 - **Fehlbestand melden** – nur Artikelnummer (+ optionale Bemerkung), ohne Lagerplatz oder Menge. Wird
   beim Absenden sofort als einfache Text-Mail (kein Anhang) an `frankfurt@wego-vti.de` gemailt.
 - Lagerplatzänderung, Verschrottung und Fehlbestand werden einzeln und sofort versendet, kein
@@ -47,9 +44,10 @@ Die Vorschlagslisten für die Formulare liegen als Excel-Dateien im Repo:
 - `data/mitarbeiter.xlsx` – Spalte `Name`, füllt die „Gemeldet von“-Auswahl in allen Formularen (kein
   Freitext möglich). Aktuell 14 Personen für Standort 812. Bei Personalwechsel hier einfach Namen
   ergänzen/entfernen.
-- `data/artikel-lagerplatz.xlsx` – optional, aktuell nicht vorhanden (siehe Hinweis oben). Nur für die
-  Massen-Lagerplatzkorrektur: welcher Artikel steht laut System aktuell auf welchem Lagerplatz (Spalten
-  wie `artikelliste.xlsx` + eine Lagerplatz-Spalte).
+- `data/artikel-lagerplatz.xlsx` – nur für die Massen-Lagerplatzkorrektur: welcher Artikel steht laut
+  System aktuell auf welchem Lagerplatz (Spalten wie `artikelliste.xlsx` + eine Lagerplatz-Spalte, z.B.
+  mit zusätzlicher `Lieferantenkennzeichen`-Spalte, die einfach ignoriert wird). Aktuell ca. 2.660
+  Artikel für Standort 812.
 
 Erkannt werden außerdem die gängigen deutschen Varianten (`Artikelnummer`, `Bezeichnung`, `Beschreibung`
 usw.) – siehe `js/refData.js`. Nur die erste Spalte (Nummer/Platz) muss einen dieser Begriffe im
