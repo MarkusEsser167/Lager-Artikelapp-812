@@ -1,0 +1,105 @@
+# Lagermeldungen 812
+
+Progressive Web App für Lagertablets: Meldung von Lagerplatzänderungen und Verschrottungen.
+
+Standort-Kopie von [Lager-Artikelapp](https://github.com/MarkusEsser167/Lager-Artikelapp) (Standort 106)
+für Standort **812** – gleicher Code, eigene Lagerplatz-/Mitarbeiterliste und eigene Empfänger.
+
+## Funktionen
+
+- **Lagerplatzänderung melden** – Artikelnummer, neuer Lagerplatz, Bemerkung. Wird beim
+  Absenden sofort als Excel-Datei an `frankfurt@wego-vti.de` gemailt.
+- **Verschrottung melden** – Artikelnummer, Menge, Grund, bis zu 4 Fotos, Bemerkung. Wird beim Absenden
+  sofort als PDF (mit allen Fotos eingebettet) an `David.Hellwig@wego-vti.de` und
+  `anthony.maier@wego-vti.de` gemailt.
+- **Massen-Lagerplatzkorrektur** – zur Inventurvorbereitung: Artikel scannen und Lagerplatz erfassen.
+  Mehrere Korrekturen werden auf der Seite gesammelt und gemeinsam als eine Excel-Datei an
+  `frankfurt@wego-vti.de` gesendet – im festen SAP-Massenupload-Format `MATNR` (Artikelnummer),
+  `WERKS`/`LGORT` (fest „812“), `LGPBE` (neuer Lagerplatz), ohne weitere Spalten. **Hinweis:** Anders als
+  bei Standort 106 gibt es hier (noch) keine `data/artikel-lagerplatz.xlsx`-Referenzliste, die den
+  aktuellen Lagerplatz laut System anzeigt – die App zeigt dafür einen Hinweis „nicht gefunden“ und
+  erfasst trotzdem normal weiter. Bei Bedarf eine Datei im gleichen Format wie bei Standort 106
+  nachreichen.
+- **Fehlbestand melden** – nur Artikelnummer (+ optionale Bemerkung), ohne Lagerplatz oder Menge. Wird
+  beim Absenden sofort als einfache Text-Mail (kein Anhang) an `frankfurt@wego-vti.de` gemailt.
+- Lagerplatzänderung, Verschrottung und Fehlbestand werden einzeln und sofort versendet, kein
+  Sammel-Export nötig
+- Artikelnummer & Lagerplatz per Barcode-/QR-Scan über die Tablet-Kamera erfassbar, mit Suche/Vorschlagsliste aus hinterlegten Listen (Fallback: manuelle Eingabe)
+- „Gemeldet von“ ist überall eine Pflicht-Auswahl aus der Mitarbeiterliste (`data/mitarbeiter.xlsx`) –
+  keine Freitext-Eingabe, damit es keine anonymen Meldungen gibt
+- Meldungen werden lokal auf dem Tablet gespeichert (IndexedDB, als Verlauf) und sind offline nutzbar –
+  bei fehlgeschlagenem automatischem Versand gibt es auf der Startseite einen „Erneut senden“-Button
+- Automatischer Mailversand über ein Google-Apps-Script-Webhook (dasselbe Script wie bei Standort 106,
+  siehe unten); Fallback: Download + E-Mail-Entwurf, falls der automatische Versand nicht erreichbar ist
+  (Anhang muss dann manuell hinzugefügt werden)
+
+## Artikel- und Lagerplatzliste aktualisieren
+
+Die Vorschlagslisten für die Formulare liegen als Excel-Dateien im Repo:
+
+- `data/artikelliste.xlsx` – SAP-Exportformat, Spalten `Material` (Artikelnummer) + beliebig viele
+  Text-Spalten (`Materialkurztext`, `Artikelkurztext 2`, `Materialkurztext 3`, …), die automatisch zu
+  einer Bezeichnung zusammengefügt werden. Aktuell ca. 153.000 Artikel (unternehmensweiter Artikelstamm,
+  identisch mit Standort 106).
+- `data/lagerplatzliste.xlsx` – Spalte mit „Lagerplatz“ im Namen (z.B. auch „FIS/wms® Lagerplatz“ –
+  der Parser erkennt Spaltennamen, die einen bekannten Begriff enthalten, nicht nur exakte Treffer).
+  Aktuell 62 Plätze für Standort 812.
+- `data/mitarbeiter.xlsx` – Spalte `Name`, füllt die „Gemeldet von“-Auswahl in allen Formularen (kein
+  Freitext möglich). Aktuell 14 Personen für Standort 812. Bei Personalwechsel hier einfach Namen
+  ergänzen/entfernen.
+- `data/artikel-lagerplatz.xlsx` – optional, aktuell nicht vorhanden (siehe Hinweis oben). Nur für die
+  Massen-Lagerplatzkorrektur: welcher Artikel steht laut System aktuell auf welchem Lagerplatz (Spalten
+  wie `artikelliste.xlsx` + eine Lagerplatz-Spalte).
+
+Erkannt werden außerdem die gängigen deutschen Varianten (`Artikelnummer`, `Bezeichnung`, `Beschreibung`
+usw.) – siehe `js/refData.js`. Nur die erste Spalte (Nummer/Platz) muss einen dieser Begriffe im
+Spaltennamen enthalten, weitere Spalten sind optional.
+
+Um eine Liste zu aktualisieren: auf GitHub in den Ordner `data/` gehen, die jeweilige Datei öffnen und über
+„Upload file“ durch eine neue Version ersetzen (Commit direkt im Browser). Es ist **keine Code-Änderung**
+nötig – die App liest beim nächsten Laden automatisch die aktuelle Version. Tablets, die offline sind,
+nutzen bis zur nächsten Online-Verbindung weiterhin die zuletzt geladene Version.
+
+## Automatischer Mailversand
+
+Jede Meldung wird beim Absenden einzeln per E-Mail über ein Google-Apps-Script-Webhook
+(`apps-script/Code.gs`) verschickt – **dasselbe Script/dieselbe Bereitstellung wie bei Standort 106**
+(Google-Konto `wegounfallapp@gmail.com`), da es komplett generisch ist (Empfänger/Betreff/Anhang kommen
+aus dem Request). Für diese App-Kopie war deshalb **keine neue Bereitstellung nötig** – `MAIL_SCRIPT_URL`
+in `js/export.js` zeigt auf dieselbe Exec-URL. Empfänger und Format sind je nach Meldungstyp fest
+hinterlegt (`js/export.js`):
+
+| Meldungstyp | Empfänger | Format |
+|---|---|---|
+| Lagerplatzänderung | `frankfurt@wego-vti.de` | Excel (1 Zeile) |
+| Verschrottung | `David.Hellwig@wego-vti.de`, `anthony.maier@wego-vti.de` | PDF mit bis zu 4 eingebetteten Fotos (`js/pdf.js`) |
+| Massen-Lagerplatzkorrektur | `frankfurt@wego-vti.de` | Excel im SAP-Format `MATNR`/`WERKS`/`LGORT`/`LGPBE` (1 Zeile je Korrektur, gesammelt) |
+| Fehlbestand | `frankfurt@wego-vti.de` | Kein Anhang – reine Text-Mail |
+
+Solange `MAIL_SCRIPT_URL` leer ist, fällt die App automatisch auf Download + vorausgefüllten
+E-Mail-Entwurf zurück (Anhang muss dann manuell hinzugefügt werden). Details zur Einrichtung/zu einem
+eigenen Script stehen im README von [Lager-Artikelapp](https://github.com/MarkusEsser167/Lager-Artikelapp)
+(Standort 106).
+
+**Bekanntes Risiko:** Bei der Unfallaufnahme-App (Vorbild für dieses Skript) wurden E-Mails vom
+Gmail-Absender an manche `@wego-vti.de`-Adressen per SPF abgelehnt. Bei `muenster@wego-vti.de` und
+`Martin.Jochheim@wego-vti.de` (Standort 106) funktioniert es nachweislich; ob das auch für
+`frankfurt@wego-vti.de`, `David.Hellwig@wego-vti.de` und `anthony.maier@wego-vti.de` gilt, ist nach dem
+ersten echten Versand noch zu bestätigen. Falls Mails nicht ankommen, muss die IT den Gmail-Absender für
+die jeweilige Adresse freischalten.
+
+## Installation auf einem Tablet
+
+1. Diese App über GitHub Pages öffnen (Chrome auf Android)
+2. Menü → „Zum Startbildschirm hinzufügen“
+3. Die App läuft danach wie eine installierte App, auch offline
+
+## Entwicklung
+
+Kein Build-Prozess nötig – reines HTML/CSS/JS. Lokal starten:
+
+```
+python -m http.server 8421
+```
+
+Danach `http://localhost:8421` öffnen.
