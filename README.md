@@ -45,9 +45,11 @@ Die Vorschlagslisten für die Formulare liegen als Excel-Dateien im Repo:
   Freitext möglich). Aktuell 14 Personen für Standort 812. Bei Personalwechsel hier einfach Namen
   ergänzen/entfernen.
 - `data/artikel-lagerplatz.xlsx` – nur für die Massen-Lagerplatzkorrektur: welcher Artikel steht laut
-  System aktuell auf welchem Lagerplatz (Spalten wie `artikelliste.xlsx` + eine Lagerplatz-Spalte, z.B.
-  mit zusätzlicher `Lieferantenkennzeichen`-Spalte, die einfach ignoriert wird). Aktuell ca. 2.660
-  Artikel für Standort 812.
+  System aktuell auf welchem Lagerplatz (Spalten wie `artikelliste.xlsx` + `Lagerplatz` + optional
+  `KZ Hlp`; zusätzliche Spalten wie `Lieferantenkennzeichen` werden einfach ignoriert). Ein Artikel darf
+  mehrfach vorkommen (mehrere Lagerplätze) – die Zeile mit `KZ Hlp` = „X“ gilt als Hauptlagerplatz und
+  wird in der App zuerst und mit „(Haupt)“ markiert angezeigt, weitere Lagerplätze folgen
+  kommagetrennt (`js/refData.js`: `groupArtikelLagerplatz`). Aktuell ca. 1.450 Artikel für Standort 812.
 
 Erkannt werden außerdem die gängigen deutschen Varianten (`Artikelnummer`, `Bezeichnung`, `Beschreibung`
 usw.) – siehe `js/refData.js`. Nur die erste Spalte (Nummer/Platz) muss einen dieser Begriffe im
