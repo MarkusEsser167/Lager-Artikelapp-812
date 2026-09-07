@@ -21,6 +21,9 @@ für Standort **812** – gleicher Code, eigene Lagerplatz-/Mitarbeiterliste und
   beim Absenden sofort als einfache Text-Mail (kein Anhang) an `frankfurt@wego-vti.de` gemailt.
 - Lagerplatzänderung, Verschrottung und Fehlbestand werden einzeln und sofort versendet, kein
   Sammel-Export nötig
+- Nach Auswahl einer Artikelnummer (auch in Lagerplatzänderung, Verschrottung und Fehlbestand, nicht
+  nur in der Massen-Lagerplatzkorrektur) wird – sofern in `data/artikel-lagerplatz.xlsx` hinterlegt –
+  der aktuelle Lagerplatz laut System eingeblendet
 - Artikelnummer & Lagerplatz per Barcode-/QR-Scan über die Tablet-Kamera erfassbar, mit Suche/Vorschlagsliste aus hinterlegten Listen (Fallback: manuelle Eingabe)
 - „Gemeldet von“ ist überall eine Pflicht-Auswahl aus der Mitarbeiterliste (`data/mitarbeiter.xlsx`) –
   keine Freitext-Eingabe, damit es keine anonymen Meldungen gibt
