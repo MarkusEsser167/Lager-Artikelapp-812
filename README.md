@@ -7,16 +7,19 @@ für Standort **812** – gleicher Code, eigene Lagerplatz-/Mitarbeiterliste und
 
 ## Funktionen
 
-- **Lagerplatzänderung melden** – Artikelnummer, neuer Lagerplatz, Bemerkung. Wird beim
-  Absenden sofort als Excel-Datei an `frankfurt@wego-vti.de` gemailt.
+- **Lagerplatzänderung melden** – Artikelnummer, Art (**Hauptlagerplatz** oder **Referenzlagerplatz**,
+  Pflichtauswahl), neuer Lagerplatz, Bemerkung. Wird beim Absenden sofort als Excel-Datei an
+  `frankfurt@wego-vti.de` gemailt.
 - **Verschrottung melden** – Artikelnummer, Menge, Grund, bis zu 4 Fotos, Bemerkung. Wird beim Absenden
   sofort als PDF (mit allen Fotos eingebettet) an `David.Hellwig@wego-vti.de` und
   `anthony.maier@wego-vti.de` gemailt.
-- **Massen-Lagerplatzkorrektur** – zur Inventurvorbereitung: Artikel scannen, aktuellen Lagerplatz laut
-  System (`data/artikel-lagerplatz.xlsx`) prüfen und ggf. korrigieren. Mehrere Korrekturen werden auf der
-  Seite gesammelt und gemeinsam als eine Excel-Datei an `frankfurt@wego-vti.de` gesendet – im festen
-  SAP-Massenupload-Format `MATNR` (Artikelnummer), `WERKS`/`LGORT` (fest „812“), `LGPBE` (neuer
-  Lagerplatz), ohne weitere Spalten.
+- **Massen-Lagerplatzkorrektur** – zur Inventurvorbereitung: Artikel scannen, aktuellen Hauptlagerplatz
+  laut System (`data/artikel-lagerplatz.xlsx`) prüfen und ggf. korrigieren. Damit lässt sich **nur der
+  Hauptlagerplatz** ändern (fester SAP-Massenupload); Referenzlagerplätze müssen einzeln über
+  „Lagerplatzänderung melden“ erfasst werden – die Seite weist deutlich darauf hin. Mehrere Korrekturen
+  werden auf der Seite gesammelt und gemeinsam als eine Excel-Datei an `frankfurt@wego-vti.de` gesendet –
+  im festen SAP-Massenupload-Format `MATNR` (Artikelnummer), `WERKS`/`LGORT` (fest „812“), `LGPBE` (neuer
+  Hauptlagerplatz), ohne weitere Spalten.
 - **Fehlbestand melden** – nur Artikelnummer (+ optionale Bemerkung), ohne Lagerplatz oder Menge. Wird
   beim Absenden sofort als einfache Text-Mail (kein Anhang) an `frankfurt@wego-vti.de` gemailt.
 - Lagerplatzänderung, Verschrottung und Fehlbestand werden einzeln und sofort versendet, kein
