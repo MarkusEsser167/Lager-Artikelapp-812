@@ -5,6 +5,11 @@ Progressive Web App für Lagertablets: Meldung von Lagerplatzänderungen und Ver
 Standort-Kopie von [Lager-Artikelapp](https://github.com/MarkusEsser167/Lager-Artikelapp) (Standort 106)
 für Standort **812** – gleicher Code, eigene Lagerplatz-/Mitarbeiterliste und eigene Empfänger.
 
+Der Startseiten-Header zeigt das WEGO-VTI-Logo (`icons/logo-wego-vti.png`) und die aktuelle
+App-Version (`js/version.js`, `APP_VERSION`). Bei jeder inhaltlichen Änderung `APP_VERSION` sowie
+`CACHE_NAME` in `sw.js` hochzählen, damit auf einen Blick erkennbar ist, welcher Stand auf einem
+Tablet installiert ist.
+
 ## Funktionen
 
 - **Lagerplatzänderung melden** – Artikelnummer, Art (**Hauptlagerplatz** oder **Referenzlagerplatz**,
