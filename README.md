@@ -50,7 +50,7 @@ Die Vorschlagslisten für die Formulare liegen als Excel-Dateien im Repo:
 
 - `data/artikelliste.xlsx` – SAP-Exportformat, Spalten `Material` (Artikelnummer) + beliebig viele
   Text-Spalten (`Materialkurztext`, `Artikelkurztext 2`, `Materialkurztext 3`, …), die automatisch zu
-  einer Bezeichnung zusammengefügt werden. Aktuell ca. 153.000 Artikel (unternehmensweiter Artikelstamm,
+  einer Bezeichnung zusammengefügt werden. Optionale Spalte `EAN` (als Text, nicht als Zahl formatieren): wird in der Artikelsuche (ab 6 Ziffern) und beim Scannen berücksichtigt, ein gescannter EAN wird direkt dem Artikel zugeordnet. Aktuell ca. 98.700 Artikel mit EAN. Aktuell ca. 153.000 Artikel (unternehmensweiter Artikelstamm,
   identisch mit Standort 106).
 - `data/lagerplatzliste.xlsx` – Spalte mit „Lagerplatz“ im Namen (z.B. auch „FIS/wms® Lagerplatz“ –
   der Parser erkennt Spaltennamen, die einen bekannten Begriff enthalten, nicht nur exakte Treffer).
