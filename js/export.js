@@ -30,7 +30,7 @@ function arrayBufferToBase64(buffer) {
 // (mode: 'no-cors', "opaque" response). Der Request selbst kommt trotzdem an und wird von
 // GmailApp verarbeitet; wir können nur erkennen, ob das Senden des Requests geklappt hat,
 // nicht ob GmailApp serverseitig einen Fehler geworfen hat.
-async function sendViaScript({ to, subject, message, filename, mimeType, arrayBuffer }) {
+async function sendViaScript({ to, subject, message, filename, mimeType, arrayBuffer, extraAttachments = [] }) {
   await fetch(MAIL_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
@@ -42,6 +42,10 @@ async function sendViaScript({ to, subject, message, filename, mimeType, arrayBu
       filename,
       mime_type: mimeType,
       file_base64: arrayBufferToBase64(arrayBuffer),
+      // Weitere Anhänge (das Apps-Script hängt sie mit an die Mail, siehe apps-script/Code.gs)
+      ...(extraAttachments.length
+        ? { extra_attachments: extraAttachments.map((a) => ({ filename: a.filename, mime_type: a.mimeType, base64: arrayBufferToBase64(a.arrayBuffer) })) }
+        : {}),
     }),
   });
 }
@@ -59,12 +63,14 @@ async function sendPlainMailViaScript({ to, subject, message }) {
 // Fallback, falls das Script nicht erreichbar ist: Datei herunterladen + E-Mail-Entwurf mit
 // vorausgefülltem Empfänger öffnen. Der Anhang muss der Nutzer im Mail-Programm einmal
 // manuell hinzufügen (mailto erlaubt keine Anhänge, Web-Share kein Vorbelegen des Empfängers).
-function fallbackDownloadAndMail({ blob, filename, to, subject, message }) {
+function fallbackDownloadAndMail({ blob, filename, to, subject, message, extraFiles = [] }) {
   downloadBlob(blob, filename);
+  extraFiles.forEach((f) => downloadBlob(f.blob, f.filename));
+  const names = [filename, ...extraFiles.map((f) => f.filename)].map((n) => `"${n}"`).join(', ');
   openMailto({
     to,
     subject,
-    body: `${message}\n\nBitte die heruntergeladene Datei "${filename}" an diese Mail anhängen.`,
+    body: `${message}\n\nBitte die heruntergeladene(n) Datei(en) ${names} an diese Mail anhängen.`,
   });
 }
 
@@ -158,6 +164,72 @@ export async function sendLagerplatzkorrekturBatch(meldungen) {
     }
   }
   fallbackDownloadAndMail({ blob, filename, to: LAGERPLATZKORREKTUR_RECIPIENT, subject, message });
+  return { method: 'download' };
+}
+
+// Massenerfassung pro Lagerplatz: eine Excel-Datei mit einer Zeile je erfasstem Artikel/Code
+// (Lagerplatz, Artikelnummer, Bezeichnung, EAN/Code, Abgleich mit dem System) an die zentrale
+// Adresse des Standorts. Unbekannte Codes werden mit aufgeführt, damit nichts verloren geht.
+export async function sendLagerplatzerfassung(m) {
+  const wb = window.XLSX.utils.book_new();
+  const rows = (m.items || []).map((i) => ({
+    Datum: formatDate(m.createdAt),
+    Standort: SAP_WERK,
+    Lagerplatz: m.lagerplatz || '',
+    Artikelnummer: i.nummer || '',
+    Artikelbezeichnung: i.bezeichnung || '',
+    'EAN / gescannter Code': i.ean || i.code || '',
+    'Lagerplatz laut System': (i.abgleich && i.abgleich.system) || '',
+    Abgleich: (i.abgleich && i.abgleich.text) || '',
+    'Gemeldet von': m.melder || '',
+  }));
+  const ws = window.XLSX.utils.json_to_sheet(rows);
+  window.XLSX.utils.book_append_sheet(wb, ws, 'Lagerplatz-Erfassung');
+  const arrayBuffer = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  const safePlatz = (m.lagerplatz || 'lagerplatz').replace(/[^a-zA-Z0-9_-]+/g, '_');
+  const filename = `Lagerplatz-Erfassung_${safePlatz}_${m.id}.xlsx`;
+  const n = rows.length;
+  const abweichend = (m.items || []).filter((i) => i.abgleich && (i.abgleich.key === 'abweichend' || i.abgleich.key === 'unbekannt')).length;
+  const referenz = (m.items || []).filter((i) => i.abgleich && i.abgleich.key === 'referenz');
+  const subject = `Lagerplatz-Erfassung ${m.lagerplatz || ''} – ${n} Artikel`;
+  let message = `Lagerplatz-Erfassung von ${m.melder || '–'}.\nLagerplatz: ${m.lagerplatz || '–'}\nErfasste Artikel: ${n}${abweichend ? `\nDavon abweichend/unbekannt: ${abweichend}` : ''}${referenz.length ? `\nACHTUNG – Lagerplatz bereits Referenzlagerplatz (nicht per Massenänderung änderbar, nicht in SAP-Datei): ${referenz.map((i) => i.nummer).join(', ')}` : ''}\nHinweis: Es wird erfasst, welche Artikel auf dem Platz stehen, nicht die Menge.`;
+
+  // Zweiter Anhang im Format der Massen-Lagerplatzkorrektur (SAP-Massenupload, siehe
+  // sendLagerplatzkorrekturBatch): nur Artikel, die laut System NICHT auf diesem Lagerplatz
+  // stehen. Neuer Hauptlagerplatz (LGPBE) = der erfasste Lagerplatz. Artikel ohne hinterlegten
+  // Systemplatz und unbekannte Codes gehören bewusst nicht hinein (nur im Erfassungsbericht).
+  const aenderungen = (m.items || []).filter((i) => i.nummer && i.abgleich && i.abgleich.key === 'abweichend');
+  const extraAttachments = [];
+  const extraFiles = [];
+  if (aenderungen.length) {
+    const sapWb = window.XLSX.utils.book_new();
+    const sapRows = aenderungen.map((i) => ({
+      MATNR: i.nummer,
+      WERKS: SAP_WERK,
+      LGORT: SAP_LGORT,
+      LGPBE: m.lagerplatz || '',
+    }));
+    window.XLSX.utils.book_append_sheet(sapWb, window.XLSX.utils.json_to_sheet(sapRows), 'Tabelle1');
+    const sapBuffer = window.XLSX.write(sapWb, { bookType: 'xlsx', type: 'array' });
+    const sapFilename = `Lagerplatzkorrektur_${safePlatz}_${m.id}.xlsx`;
+    extraAttachments.push({ filename: sapFilename, mimeType: blob.type, arrayBuffer: sapBuffer });
+    extraFiles.push({ filename: sapFilename, blob: new Blob([sapBuffer], { type: blob.type }) });
+    message += `\n\nAnhang 2 (SAP-Massenänderung): ${aenderungen.length} Artikel mit neuem Hauptlagerplatz ${m.lagerplatz || '–'}.`;
+  } else {
+    message += '\n\nKeine Lagerplatzänderungen nötig (kein Artikel weicht vom System ab).';
+  }
+
+  if (MAIL_SCRIPT_URL) {
+    try {
+      await sendViaScript({ to: LAGERPLATZ_RECIPIENT, subject, message, filename, mimeType: blob.type, arrayBuffer, extraAttachments });
+      return { method: 'auto' };
+    } catch (err) {
+      console.warn('Automatischer Mailversand fehlgeschlagen, Fallback auf Download+mailto:', err.message);
+    }
+  }
+  fallbackDownloadAndMail({ blob, filename, to: LAGERPLATZ_RECIPIENT, subject, message, extraFiles });
   return { method: 'download' };
 }
 

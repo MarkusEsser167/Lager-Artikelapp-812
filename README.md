@@ -25,6 +25,18 @@ Tablet installiert ist.
   werden auf der Seite gesammelt und gemeinsam als eine Excel-Datei an `frankfurt@wego-vti.de` gesendet –
   im festen SAP-Massenupload-Format `MATNR` (Artikelnummer), `WERKS`/`LGORT` (fest „812“), `LGPBE` (neuer
   Hauptlagerplatz), ohne weitere Spalten.
+- **Lagerplatz-Erfassung (Kamera)** – Massenerfassung pro Lagerplatz: Lagerplatz wählen, dann die Kamera über die
+  Ware halten; alle gleichzeitig sichtbaren Barcodes (EAN oder Artikelnummer) werden fortlaufend erfasst
+  (`js/massScan.js`, `BarcodeDetector`). Ein Code zählt erst nach zwei Erkennungen. Ergebnis ist eine Liste
+  der Artikel auf dem Platz – **keine Mengen**, jeder Artikel nur einmal – mit Abgleich gegen
+  `artikel-lagerplatz.xlsx` (passt / abweichend / ohne Referenz / unbekannt). Versand als Excel an die
+  Standort-Mailadresse.
+  Zusätzlich wird – nur für Artikel, die laut System nicht auf diesem Lagerplatz stehen – eine zweite Excel-Datei im
+  Format der Massen-Lagerplatzkorrektur (`MATNR`, `WERKS`, `LGORT`, `LGPBE`) mit dem erfassten Lagerplatz als neuem
+  Hauptlagerplatz angehängt.
+  Ist der erfasste Lagerplatz für einen Artikel bereits als **Referenzlagerplatz** eingetragen, warnt die App
+  (rot im Kamerabild + Vibration, Hinweis in Liste und Mail); solche Artikel kommen nicht in die SAP-Datei,
+  da die Massenänderung nur Hauptlagerplätze setzen kann.
 - **Fehlbestand melden** – nur Artikelnummer (+ optionale Bemerkung), ohne Lagerplatz oder Menge. Wird
   beim Absenden sofort als einfache Text-Mail (kein Anhang) an `frankfurt@wego-vti.de` gemailt.
 - Lagerplatzänderung, Verschrottung und Fehlbestand werden einzeln und sofort versendet, kein
